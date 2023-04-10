@@ -12,10 +12,10 @@ import pyransac3d as pyrsc
 flange = pyrsc.Flange()
 
 
-for i in range(1):
+for i in range(5):
     pcd = o3d.io.read_point_cloud(f"tests/dataset/flange_{1+i}.txt", format = 'xyz')
     print(pcd)
-    o3d.visualization.draw_geometries([pcd])
+    # o3d.visualization.draw_geometries([pcd])
 
     points = np.asarray(pcd.points)
     radius = .08
