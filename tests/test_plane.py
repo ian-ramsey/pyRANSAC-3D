@@ -13,7 +13,11 @@ points = np.asarray(pcd_load.points)
 
 plano1 = pyrsc.Plane()
 
-best_eq, best_inliers = plano1.fit(points, 0.01)
+best_eq = 0;
+best_inliers = 0;
+
+best_eq, best_inliers = plano1.fit(points, 0.01, maxIteration = 5000)
+print(best_eq)
 plane = pcd_load.select_by_index(best_inliers).paint_uniform_color([1, 0, 0])
 obb = plane.get_oriented_bounding_box()
 obb2 = plane.get_axis_aligned_bounding_box()

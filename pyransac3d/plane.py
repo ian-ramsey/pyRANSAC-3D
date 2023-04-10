@@ -28,7 +28,7 @@ class Plane:
         :param thresh: Threshold distance from the plane which is considered inlier.
         :param maxIteration: Number of maximum iteration which RANSAC will loop over.
         :returns:
-        - `self.equation`:  Parameters of the plane using Ax+By+Cy+D `np.array (1, 4)`
+        - `self.equation`:  Parameters of the plane using Ax+By+Cz+D `np.array (1, 4)`
         - `self.inliers`: points from the dataset considered inliers
 
         ---
@@ -36,8 +36,14 @@ class Plane:
         n_points = pts.shape[0]
         best_eq = []
         best_inliers = []
-
+        print('fitting a plane...')
+        print('\n', end = '')
         for it in range(maxIteration):
+            if it % (maxIteration / 100) == 0:
+                print("\033[F" , end = '')
+                print(f"{(it*100)//maxIteration}% complete!")
+
+
 
             # Samples 3 random points
             id_samples = random.sample(range(0, n_points), 3)
@@ -54,7 +60,7 @@ class Plane:
             # Now we compute the cross product of vecA and vecB to get vecC which is normal to the plane
             vecC = np.cross(vecA, vecB)
 
-            # The plane equation will be vecC[0]*x + vecC[1]*y + vecC[0]*z = -k
+            # The plane equation will be vecC[0]*x + vecC[1]*y + vecC[2]*z = -k
             # We have to use a point to find k
             vecC = vecC / np.linalg.norm(vecC)
             k = -np.sum(np.multiply(vecC, pt_samples[1, :]))
@@ -67,6 +73,19 @@ class Plane:
                 plane_eq[0] * pts[:, 0] + plane_eq[1] * pts[:, 1] + plane_eq[2] * pts[:, 2] + plane_eq[3]
             ) / np.sqrt(plane_eq[0] ** 2 + plane_eq[1] ** 2 + plane_eq[2] ** 2)
 
+            # ################################################################################################
+            # # L1 projection step
+            # ################################################################################################
+            # max_dir = np.argmax(np.abs(plane_eq[0:2]))
+            # newcoords = (-1/plane_eq[(max_dir)]) * (plane_eq[(max_dir + 1)%3] * pts[:, (max_dir + 1)%3]  \
+            #                                         + plane_eq[(max_dir + 2)%3] * pts[:, (max_dir + 2)%3] \
+            #                                         + plane_eq[3])
+            # projs = np.stack([newcoords, pts[:, (max_dir + 1) % 3], pts[:, (max_dir + 2) % 3]], axis = 1)
+            #
+            # dist_pt = np.linalg.norm(pts - projs, axis = 1, ord = 1)
+            # #################################################################################################
+
+
             # Select indexes where distance is biggers than the threshold
             pt_id_inliers = np.where(np.abs(dist_pt) <= thresh)[0]
             if len(pt_id_inliers) > len(best_inliers):
@@ -74,5 +93,8 @@ class Plane:
                 best_inliers = pt_id_inliers
             self.inliers = best_inliers
             self.equation = best_eq
+
+        # normalize output
+        self.equation = [param / np.average(self.equation) for param in self.equation]
 
         return self.equation, self.inliers
